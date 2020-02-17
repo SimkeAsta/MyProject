@@ -8,7 +8,8 @@ class NewUploadFileContainer extends Component {
         super();
         this.state = {
             file: null,
-            results: []
+            results: [],
+            filename: ''
         };
         console.log(this.state.file)
     }
@@ -30,7 +31,7 @@ class NewUploadFileContainer extends Component {
             .catch((error) => {
                 console.log("nepavyko.")
             })
-        axios.get("http://localhost:8080/file/allFiles")
+        axios.get("http://localhost:8080/file/allFilesNames")
             .then(response => {
                 this.setState({ results: response.data });
             })
@@ -40,20 +41,65 @@ class NewUploadFileContainer extends Component {
 
     }
 
+    onClick = (e) => {
+        e.preventDefault();
+        axios.post("http://localhost:8080/file/writeToFile")
+            .then(response => {
+                console.log("Pavyko irasyti teksta.")
+            })
+            .catch(error => { "Nepavyko irasyti teksto." });
+        axios.get("http://localhost:8080/file/download")
+            .then(response => {
+                console.log()
+            })
+            .catch(error => { "Nepavyko" });
+        // filenames.forEach(filename => {
+        //     axios.get("http://localhost:8080/downloadFile/" + filename)
+        //         .then(response => { })
+        //         .catch(error => {
+        //             console.log("negali ikelti.")
+        //         });
+        // });
+
+    };
+
+    handleClick = (e) => {
+        e.preventDefault();
+        axios.delete("http://localhost:8080/file/delete")
+            .then(response => {
+                console.log("Sekmingai istrinta")
+            })
+            .catch(error => { });
+        axios.get("http://localhost:8080/file/allFilesNames")
+            .then(response => {
+                this.setState({ results: response.data });
+            })
+            .catch(error => {
+                alert("Nėra galimybės pateikti duomenų apie dokumentus.");
+            });
+    }
+
     render() {
         let result = this.state.results.map((result, index) => {
             return <ListForDocumentComponent key={index} result={result} />;
         });
         return (
-            <div>
+            <div className="container">
                 <NewUploadFileComponent
                     file={this.state.file}
                     onChange={this.onChange}
                     onFormSubmit={this.onFormSubmit}
                 />
+
+                <hr></hr>
+
+                <h3>You have uploaded these files: </h3>
                 {result}
 
-                <button type="button" className="btn btn-light">Light</button>
+                <button type="button" className="btn btn-light" onClick={this.onClick}>Count words</button>
+
+                <button type="button" className="btn btn-light" onClick={this.handleClick}>Start all over again</button>
+
             </div>
         );
     }

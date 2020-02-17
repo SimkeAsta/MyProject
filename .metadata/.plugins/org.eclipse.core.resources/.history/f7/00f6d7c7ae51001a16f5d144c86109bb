@@ -93,7 +93,7 @@ public class FileController {
   
   @GetMapping("file/download")
   public List<String> downloadFilesList(){
-	  return fileService.getDownloadFilesNames();
+	  return fileService.getDownloadFilesList();
   }
 
 }

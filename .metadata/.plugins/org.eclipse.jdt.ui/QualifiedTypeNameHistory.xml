@@ -44,8 +44,8 @@
 <fullyQualifiedTypeName name="java.util.ArrayList"/>
 <fullyQualifiedTypeName name="java.io.File"/>
 <fullyQualifiedTypeName name="org.apache.tomcat.util.http.fileupload.FileUtils"/>
-<fullyQualifiedTypeName name="project.metasite.newWay.FileEntity"/>
 <fullyQualifiedTypeName name="project.metasite.newWay.FileRepository"/>
 <fullyQualifiedTypeName name="org.springframework.boot.context.properties.EnableConfigurationProperties"/>
 <fullyQualifiedTypeName name="project.metasite.newWay.FileStorageProperties"/>
+<fullyQualifiedTypeName name="project.metasite.newWay.FileEntity"/>
 </qualifiedTypeNameHistroy>

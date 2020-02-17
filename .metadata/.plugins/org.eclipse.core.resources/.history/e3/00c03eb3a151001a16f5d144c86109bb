@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import project.metasite.newWay.FileRepository;
 
 @Service
 public class FileService {
@@ -35,8 +36,13 @@ public class FileService {
 	
 	private Path fileDownloadLocation;
 
+//	@Autowired
+//	private FileRepository fileRepo;
+
 	@Autowired
-	public FileService() throws IOException {
+	public FileService(
+//			FileStorageProperties fileStorageProperties
+			) throws IOException {
 		this.fileStorageLocation = Files.createDirectories(Paths.get("/tmp/Uploads/"));
 		this.fileDownloadLocation = Files.createDirectories(Paths.get("/tmp/Downloads/"));
 	}
@@ -69,43 +75,61 @@ public class FileService {
 	}
 	
 	@Transactional
-	public List<String> getDownloadFilesNames() {
+	public List<String> getDownloadFilesList() {
 		List<String> results = new ArrayList<String>();
-		File[] files = new File("/tmp/Downloads/").listFiles();
+		try (Stream<Path> walk = Files.walk(Paths.get("/tmp/Downloads/"))) {
+            List<String> result = walk.filter(Files::isRegularFile)
+                    .map(x -> x.toString()).collect(Collectors.toList());
 
-		for (File file : files) {
-			if (file.isFile()) {
-				results.add(file.getName());
-			}
-		}
+            results = result;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 		return results;
 	}
 	
 	@Transactional
 	public String storeDownloadedFile(MultipartFile file) throws IOException {
+		// Normalize file name
 		String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
 		try {
+			// Check if the file's name contains invalid characters
+//			if (fileName.contains("..")) {
+//				throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
+//			}
+
+			// Copy file to the target location (Replacing existing file with the same name)
 			Path targetLocation = this.fileDownloadLocation.resolve(fileName);
 			Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
 			return fileName;
 		} catch (IOException ex) {
 			throw ex;
+//			throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
 		}
 	}
 
 	@Transactional
 	public String storeUploadedFile(MultipartFile file) throws IOException {
+		
+		// Normalize file name
 		String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
 		try {
+			// Check if the file's name contains invalid characters
+//			if (fileName.contains("..")) {
+//				throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
+//			}
+
+			// Copy file to the target location (Replacing existing file with the same name)
 			Path targetLocation = this.fileStorageLocation.resolve(fileName);
 			Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
 			return fileName;
 		} catch (IOException ex) {
 			throw ex;
+//			throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
 		}
 	}
 	
@@ -163,10 +187,10 @@ public class FileService {
 	public List<FileWriter> writeToFile() throws IOException {
 		List<FileWriter> filesWithContent = new ArrayList<>();
 		List<String> list = countRepeatedWords();
-		FileWriter writer = new FileWriter(new File("/tmp/Downloads/", "A to G.txt"));
-		FileWriter writerTwo = new FileWriter(new File("/tmp/Downloads/", "H to N.txt"));
-		FileWriter writerThree = new FileWriter(new File("/tmp/Downloads/", "O to U.txt"));
-		FileWriter writerFour = new FileWriter(new File("/tmp/Downloads/", "V to Z.txt"));
+		FileWriter writer = new FileWriter("A to G.txt");
+		FileWriter writerTwo = new FileWriter("H to N.txt");
+		FileWriter writerThree = new FileWriter("O to U.txt");
+		FileWriter writerFour = new FileWriter("V to Z.txt");
 		for (String str : list) {
 			char c = str.charAt(0);
 			if (c >= 'a' && c <= 'g') {

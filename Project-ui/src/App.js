@@ -1,12 +1,14 @@
 import React from 'react';
 import './App.css';
 import NewUploadFileContainer from './newTry/NewFileUploadContainer';
+import Header from './newTry/Header';
 
 
 
 function App() {
   return (
-    <div className="container-fluid mx-auto">
+    <div>
+      <Header />
       <NewUploadFileContainer />
 
 
