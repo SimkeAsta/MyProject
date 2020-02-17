@@ -1,0 +1,7 @@
+//package project.metasite.anotherTry;
+//
+//import org.springframework.data.jpa.repository.JpaRepository;
+//
+//public interface FileRepo extends JpaRepository<FileForUpload, Long> {
+//
+//}
