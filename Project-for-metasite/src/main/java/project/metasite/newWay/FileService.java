@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import project.metasite.newWay.FileRepository;
 
 @Service
 public class FileService {
@@ -34,21 +36,19 @@ public class FileService {
 	
 	private Path fileDownloadLocation;
 
-	FileStorageProperties fileStorageProperties;
+	@Autowired
+	private FileRepository fileRepo;
 
 	@Autowired
-	FileRepository fileRepo;
-
-	@Autowired
-	public FileService(FileStorageProperties fileStorageProperties) {
-		this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir()).toAbsolutePath().normalize();
-		this.fileDownloadLocation = Paths.get(fileStorageProperties.getDownloadDir()).toAbsolutePath().normalize();
+	public FileService(FileStorageProperties fileStorageProperties) throws IOException {
+		this.fileStorageLocation = Files.createDirectories(Paths.get("/tmp/Uploads/"));
+		this.fileDownloadLocation = Files.createDirectories(Paths.get("/tmp/Downloads/"));
 	}
 
 	@Transactional
 	public List<String> getAllFilesNames() {
 		List<String> results = new ArrayList<String>();
-		File[] files = new File("/home/asta/Desktop/Project For Matesite/Project-for-metasite/Uploads/").listFiles();
+		File[] files = new File("/tmp/Uploads/").listFiles();
 
 		for (File file : files) {
 			if (file.isFile()) {
@@ -61,7 +61,7 @@ public class FileService {
 	@Transactional
 	public List<String> getFilesList() {
 		List<String> results = new ArrayList<String>();
-		try (Stream<Path> walk = Files.walk(Paths.get("/home/asta/Desktop/Project For Matesite/Project-for-metasite/Uploads/"))) {
+		try (Stream<Path> walk = Files.walk(Paths.get("/tmp/Uploads/"))) {
             List<String> result = walk.filter(Files::isRegularFile)
                     .map(x -> x.toString()).collect(Collectors.toList());
 
@@ -75,7 +75,7 @@ public class FileService {
 	@Transactional
 	public List<String> getDownloadFilesList() {
 		List<String> results = new ArrayList<String>();
-		try (Stream<Path> walk = Files.walk(Paths.get("/home/asta/Desktop/Project For Matesite/Project-for-metasite/Downloads/"))) {
+		try (Stream<Path> walk = Files.walk(Paths.get("/tmp/Downloads/"))) {
             List<String> result = walk.filter(Files::isRegularFile)
                     .map(x -> x.toString()).collect(Collectors.toList());
 
@@ -110,6 +110,7 @@ public class FileService {
 
 	@Transactional
 	public String storeUploadedFile(MultipartFile file) throws IOException {
+		
 		// Normalize file name
 		String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
@@ -209,5 +210,10 @@ public class FileService {
 		writerThree.close();
 		writerFour.close();
 		return filesWithContent;
+	}
+	
+	@Transactional
+	public void deleteFilesInAFolder() throws IOException {
+		FileUtils.cleanDirectory(new File("/tmp/Uploads/"));
 	}
 }

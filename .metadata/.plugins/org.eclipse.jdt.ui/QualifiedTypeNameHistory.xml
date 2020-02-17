@@ -32,7 +32,6 @@
 <fullyQualifiedTypeName name="java.io.IOException"/>
 <fullyQualifiedTypeName name="java.util.stream.Stream"/>
 <fullyQualifiedTypeName name="java.util.stream.Collectors"/>
-<fullyQualifiedTypeName name="java.io.File"/>
 <fullyQualifiedTypeName name="java.io.FilenameFilter"/>
 <fullyQualifiedTypeName name="java.nio.charset.StandardCharsets"/>
 <fullyQualifiedTypeName name="java.util.Arrays"/>
@@ -43,4 +42,10 @@
 <fullyQualifiedTypeName name="org.springframework.core.io.Resource"/>
 <fullyQualifiedTypeName name="java.io.FileNotFoundException"/>
 <fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="java.io.File"/>
+<fullyQualifiedTypeName name="org.apache.tomcat.util.http.fileupload.FileUtils"/>
+<fullyQualifiedTypeName name="project.metasite.newWay.FileEntity"/>
+<fullyQualifiedTypeName name="project.metasite.newWay.FileRepository"/>
+<fullyQualifiedTypeName name="org.springframework.boot.context.properties.EnableConfigurationProperties"/>
+<fullyQualifiedTypeName name="project.metasite.newWay.FileStorageProperties"/>
 </qualifiedTypeNameHistroy>

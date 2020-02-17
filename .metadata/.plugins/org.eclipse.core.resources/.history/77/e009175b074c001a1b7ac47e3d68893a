@@ -1,5 +1,0 @@
-package project.metasite.anotherTry;
-
-public interface FileRepo {
-
-}
