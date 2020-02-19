@@ -25,19 +25,29 @@ public class FileController {
 	@Autowired
 	FileService fileService;
 
-	@PostMapping("file/writeToFile")
-	public List<FileWriter> writeToFile() throws IOException {
-		return fileService.writeToFile();
+	@PostMapping("file/uploadFile")
+	public FileEntity uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
+		String fileName = fileService.storeUploadedFile(file);
+
+		if (fileName.isEmpty()) {
+			return null;
+		} else {
+
+			String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
+					.path(fileName).toUriString();
+
+			return new FileEntity(fileName, fileDownloadUri, file.getContentType(), file.getSize());
+		}
 	}
 
 	@GetMapping("file/allFilesNames")
 	public List<String> getListOfFiles() throws IOException {
 		return fileService.getAllFilesNames();
 	}
-	
+
 	@GetMapping("file/getFiles")
 	public List<String> getFiles() throws IOException {
-		return fileService.getFilesList();
+		return fileService.getUploadsFilesList();
 	}
 
 	@GetMapping("file/readFiles")
@@ -50,99 +60,47 @@ public class FileController {
 		return fileService.countRepeatedWords();
 	}
 
-	@PostMapping("file/uploadFile")
-	public FileEntity uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
-		String fileName = fileService.storeUploadedFile(file);
-
-		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
-				.path(fileName).toUriString();
-
-		return new FileEntity(fileName, fileDownloadUri, file.getContentType(), file.getSize());
+	@PostMapping("file/writeToFile")
+	public List<FileWriter> writeToFile() throws IOException {
+		if (fileService.writeToFile() == null) {
+			throw new IOException();
+		}
+		return fileService.writeToFile();
 	}
-	
+
 	@DeleteMapping("file/delete")
 	public void deleteFiles() throws IOException {
 		fileService.deleteFilesInAFolder();
 	}
-	
-//  @GetMapping("/downloadFile/{fileName:.+}")
-//  public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) throws FileNotFoundException {
-//      // Load file as Resource
-//      Resource resource = fileService.loadFileAsResource(fileName);
-//
-//      // Try to determine file's content type
-//      String contentType = null;
-//      try {
-//          contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-//      } catch (IOException ex) {
-//         
-//      }
-//
-//      // Fallback to the default content type if type could not be determined
-//      if(contentType == null) {
-//          contentType = "application/octet-stream";
-//      }
-//      
-//      return ResponseEntity.ok()
-//              .contentType(MediaType.parseMediaType(contentType))
-//              .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-//              .body(resource);
-//  }
-//  
-  @GetMapping("file/downloadFilesNames")
-  public List<String> downloadFilesList(){
-	  return fileService.getDownloadFilesNames();
-  }
-  
-  @GetMapping("file/content")
-  public List<String> getContent() throws IOException {
-	  return fileService.getFileContent();
-  }
-  
-//  @GetMapping("/file/download")
-//	public ResponseEntity<byte[]> downloadFile() throws Exception {
-//		String data = fileService.getFileContent();
-//		ObjectMapper objectMapper = new ObjectMapper();
-//		String text = objectMapper.writeValueAsString(data);
-//		byte[] isr = text.getBytes();
-//		String fileName = "A to G.txt";
-//		HttpHeaders respHeaders = new HttpHeaders();
-//		respHeaders.setContentLength(text.length());
-//		respHeaders.setContentType(new MediaType("text", "txt"));
-//		respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-//		respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
-//		return new ResponseEntity<byte[]>(isr, respHeaders, HttpStatus.OK);
-//	}
-  
-  @GetMapping("/downloadZip")
-  public void downloadFile(HttpServletResponse response) {
 
-      response.setContentType("application/octet-stream");
-      response.setHeader("Content-Disposition", "attachment;filename=download.zip");
-      response.setStatus(HttpServletResponse.SC_OK);
+	@GetMapping("/downloadZip")
+	public void downloadFile(HttpServletResponse response) throws Exception {
 
-      List<String> fileNames = fileService.getDownloadFilesNames();
+		response.setContentType("application/octet-stream");
+		response.setHeader("Content-Disposition", "attachment;filename=download.zip");
+		response.setStatus(HttpServletResponse.SC_OK);
 
-      System.out.println("############# file size ###########" + fileNames.size());
+		List<String> fileNames = fileService.getDownloadsFilesList();
 
-      try (ZipOutputStream zippedOut = new ZipOutputStream(response.getOutputStream())) {
-          for (String file : fileNames) {
-              FileSystemResource resource = new FileSystemResource(file);
+		{
 
-              ZipEntry e = new ZipEntry(resource.getFilename());
-              // Configure the zip entry, the properties of the file
-              e.setSize(resource.contentLength());
-              e.setTime(System.currentTimeMillis());
-              // etc.
-              zippedOut.putNextEntry(e);
-              // And the content of the resource:
-              StreamUtils.copy(resource.getInputStream(), zippedOut);
-              zippedOut.closeEntry();
-          }
-          zippedOut.finish();
-      } catch (Exception e) {
-          // Exception handling goes here
-      }
-  }
+			try (ZipOutputStream zippedOut = new ZipOutputStream(response.getOutputStream())) {
+				for (String file : fileNames) {
+					FileSystemResource resource = new FileSystemResource(file);
+
+					ZipEntry e = new ZipEntry(resource.getFilename());
+					e.setSize(resource.contentLength());
+					e.setTime(System.currentTimeMillis());
+					zippedOut.putNextEntry(e);
+					StreamUtils.copy(resource.getInputStream(), zippedOut);
+					zippedOut.closeEntry();
+				}
+				zippedOut.finish();
+			} catch (Exception e) {
+				throw e;
+			}
+
+		}
+	}
 
 }

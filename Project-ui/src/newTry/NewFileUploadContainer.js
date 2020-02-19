@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import NewUploadFileComponent from "./NewUploadFileComponent";
 import ListForDocumentComponent from "./ListForDocumentsComponent";
-import JSZip from 'jszip';
 
 class NewUploadFileContainer extends Component {
     constructor() {
@@ -10,13 +9,12 @@ class NewUploadFileContainer extends Component {
         this.state = {
             file: null,
             results: [],
-            content: 'abc',
         };
-        console.log(this.state.content)
-        console.log(this.state.file)
     }
 
-
+    show = (e) => {
+        return { showResults: false };
+    }
 
     onChange = (e) => {
         this.setState({ file: e.target.files[0] })
@@ -26,7 +24,6 @@ class NewUploadFileContainer extends Component {
         e.preventDefault();
         const data = new FormData()
         data.append("file", this.state.file)
-        console.log("Info", data)
         axios
             .post("http://localhost:8080/file/uploadFile", data)
             .then((response) => {
@@ -35,38 +32,23 @@ class NewUploadFileContainer extends Component {
                         this.setState({ results: response.data });
                     })
                     .catch(error => {
-                        alert("Nėra galimybės pateikti duomenų apie dokumentus.");
                     });
             })
             .catch((error) => {
-                console.log("nepavyko.")
+                alert("You haven't uploaded any files, please try again.")
             })
-
-
     }
 
     onClick = (e) => {
         e.preventDefault();
         axios.post("http://localhost:8080/file/writeToFile")
             .then(response => {
-                console.log("Pavyko irasyti teksta.")
-
-                // axios.get("http://localhost:8080/file/content")
-                //     .then(response => {
-                //         console.log(this.setState({ content: response.data }))
-                //     })
-                //     .catch(error => { "Nepavyko" });
+                this.setState({ showResults: true });
+                alert("Words in your files were counted successfully. If you'd like to get your results, please press Download button.")
             })
-            .catch(error => { "Nepavyko irasyti teksto." });
-
-        // filenames.forEach(filename => {
-        //     axios.get("http://localhost:8080/downloadFile/" + filename)
-        //         .then(response => { })
-        //         .catch(error => {
-        //             console.log("negali ikelti.")
-        //         });
-        // });
-
+            .catch(error => {
+                alert("Program was not able to count words. Please check if you uploaded any files.")
+            })
     };
 
     handleClick = (e) => {
@@ -76,11 +58,10 @@ class NewUploadFileContainer extends Component {
                 axios.get("http://localhost:8080/file/allFilesNames")
                     .then(response => {
                         this.setState({ results: response.data });
+                        alert("You have deleted all files successfully. \nYou can upload new files.")
                     })
                     .catch(error => {
-                        alert("Nėra galimybės pateikti duomenų apie dokumentus.");
                     });
-                console.log("Sekmingai istrinta")
             })
             .catch(error => { });
 
@@ -89,19 +70,15 @@ class NewUploadFileContainer extends Component {
     downloadFiles = () => {
         fetch('http://localhost:8080/downloadZip')
             .then(response => {
-                console.log(response);
                 response.blob().then(blob => {
                     let url = window.URL.createObjectURL(blob);
                     let a = document.createElement('a');
                     a.href = url;
-                    a.download = 'zip.zip';
+                    a.download = 'Results.zip';
                     a.click();
                 });
-                //window.location.href = response.url;
             });
     }
-
-
 
     render() {
         let result = this.state.results.map((result, index) => {
@@ -117,19 +94,33 @@ class NewUploadFileContainer extends Component {
 
                 <hr></hr>
 
-                <h3>You have uploaded these files: </h3>
+                <h3 id="upload">You have uploaded these files: </h3>
                 {result}
 
-                <button type="button" className="btn btn-light" onClick={this.onClick} > Count words</button>
+                <hr id="hr"></hr>
 
-                <button type="button" className="btn btn-light" onClick={this.handleClick}>Start all over again</button>
+                <div className="row" id="newRow">
+                    <h3 id="canDo">You can:</h3>
+                    <div className="col-2" id="countWords">
+                        <button id="btn" onClick={this.onClick} > Count words</button>
+                    </div>
+                    <div className="col-1">
+                        <h3>or</h3>
+                    </div>
+                    <div className="col-3" id="countWords">
+                        <button onClick={this.handleClick}>Delete present files</button>
+                    </div>
+                </div>
 
-
-                <h1>Download File using React App</h1>
-                <h3>Download Employee Data using Button</h3>
-                <button onClick={this.downloadFiles}>Download</button>
-
-
+                <hr id="hr"></hr>
+                <div>
+                    {this.state.showResults ?
+                        <div>
+                            <h4 className="download">If you'd like to download files with the results, please press the download button below:</h4>
+                            <button className="download" onClick={this.downloadFiles}>Download</button>
+                        </div>
+                        : null}
+                </div>
             </div >
         );
     }

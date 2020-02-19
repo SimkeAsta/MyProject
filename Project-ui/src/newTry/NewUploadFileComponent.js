@@ -8,7 +8,9 @@ const NewUploadFileComponent = props => {
                     <form onSubmit={props.onFormSubmit}>
                         <h1>File Upload</h1>
                         <input type="file" onChange={props.onChange} />
-                        <button type="submit">Upload</button>
+                        <div>
+                            <button id="uploadButton" type="submit">Upload</button>
+                        </div>
                     </form>
                 </div>
             </div>
