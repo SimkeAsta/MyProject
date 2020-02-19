@@ -1,7 +1,9 @@
 package project.metasite.newWay;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -23,10 +25,16 @@ import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class FileService {
@@ -71,13 +79,14 @@ public class FileService {
 	@Transactional
 	public List<String> getDownloadFilesNames() {
 		List<String> results = new ArrayList<String>();
-		File[] files = new File("/tmp/Downloads/").listFiles();
+		try (Stream<Path> walk = Files.walk(Paths.get("/tmp/Downloads/"))) {
+            List<String> result = walk.filter(Files::isRegularFile)
+                    .map(x -> x.toString()).collect(Collectors.toList());
 
-		for (File file : files) {
-			if (file.isFile()) {
-				results.add(file.getName());
-			}
-		}
+            results = result;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 		return results;
 	}
 	
@@ -128,7 +137,7 @@ public class FileService {
 	public String readLineByLine() {
 		List<String> filePaths = getFilesList();
 		StringBuilder contentBuilder = new StringBuilder();
-		String filePath = null;
+		String filePath = "";
 		String wholeText = " ";
 		for (String string : filePaths) {
 			filePath = string;
@@ -146,7 +155,7 @@ public class FileService {
 
 	@Transactional
 	public List<String> countRepeatedWords() {
-		String result = null;
+		String result = "";
 		List<String> finalResult = new ArrayList<String>();
 		String text = readLineByLine().toLowerCase();
 		List<String> list = Arrays.asList(text.split("\\.|\\s|,"));
@@ -194,4 +203,95 @@ public class FileService {
 	public void deleteFilesInAFolder() throws IOException {
 		FileUtils.cleanDirectory(new File("/tmp/Uploads/"));
 	}
+	
+	@Transactional
+	public List<String> getFileContent() throws IOException {
+		List<String> contentFiles = new ArrayList<String>();
+		String file = "";
+		List<String> filesWithContent = getDownloadFilesNames();
+		String newContent = null;
+		for (String string : filesWithContent) {
+			file = string;
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+		    String         line = null;
+		    StringBuilder  stringBuilder = new StringBuilder();
+		    String tab = " ";
+		    String coma = ",";
+
+		    try {
+		        while((line = reader.readLine()) != null) {
+		            stringBuilder.append(line);
+		            stringBuilder.append(coma);
+		            stringBuilder.append(tab);
+		        }
+
+		       newContent = stringBuilder.toString();
+		       contentFiles.add(newContent);
+		    } finally {
+		        reader.close();
+		    }
+		}
+		return contentFiles;
+	}
+	
+//	public ResponseEntity<List<byte[]>> downloadingFile() throws IOException {
+//		List<String> data = getFileContent();
+//		String singleContent = "";
+//		String fileName = "";
+//		ResponseEntity<List<byte[]>> newList = null;
+//		for (String string : data) {
+//			singleContent = string;
+//			char c = singleContent.charAt(0);
+//			if (c >= 'a' && c <= 'g') {
+//				fileName = "A to G.txt";
+//				ObjectMapper objectMapper = new ObjectMapper();
+//				String text = objectMapper.writeValueAsString(singleContent);
+//				byte[] isr = text.getBytes();
+//				HttpHeaders respHeaders = new HttpHeaders();
+//				respHeaders.setContentLength(text.length());
+//				respHeaders.setContentType(new MediaType("text", "txt"));
+//				respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+//				respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+//				newList.getBody
+//						new ResponseEntity<byte[]>(isr, respHeaders, HttpStatus.OK);
+//				
+//			} else if (c >= 'h' && c <= 'n') {
+//				fileName = "H to N.txt";
+//				ObjectMapper objectMapper = new ObjectMapper();
+//				String text = objectMapper.writeValueAsString(singleContent);
+//				byte[] isr = text.getBytes();
+//				HttpHeaders respHeaders = new HttpHeaders();
+//				respHeaders.setContentLength(text.length());
+//				respHeaders.setContentType(new MediaType("text", "txt"));
+//				respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+//				respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+//				newList.add(new ResponseEntity<byte[]>(isr, respHeaders, HttpStatus.OK));
+//			} else if (c >= 'o' && c <= 'u') {
+//				fileName = "O to U.txt";
+//				ObjectMapper objectMapper = new ObjectMapper();
+//				String text = objectMapper.writeValueAsString(singleContent);
+//				byte[] isr = text.getBytes();
+//				HttpHeaders respHeaders = new HttpHeaders();
+//				respHeaders.setContentLength(text.length());
+//				respHeaders.setContentType(new MediaType("text", "txt"));
+//				respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+//				respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+//				newList.add(new ResponseEntity<byte[]>(isr, respHeaders, HttpStatus.OK));
+//			} else if (c >= 'v' && c <= 'z') {
+//				fileName = "V to U.txt";
+//				ObjectMapper objectMapper = new ObjectMapper();
+//				String text = objectMapper.writeValueAsString(singleContent);
+//				byte[] isr = text.getBytes();
+//				HttpHeaders respHeaders = new HttpHeaders();
+//				respHeaders.setContentLength(text.length());
+//				respHeaders.setContentType(new MediaType("text", "txt"));
+//				respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+//				respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+//				newList.add(new ResponseEntity<byte[]>(isr, respHeaders, HttpStatus.OK));
+//			}
+//			
+//		}
+//		return newList;
+//		
+//	}
 }
